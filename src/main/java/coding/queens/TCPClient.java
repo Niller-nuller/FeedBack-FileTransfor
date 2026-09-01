@@ -11,6 +11,7 @@ public class TCPClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
 
+
     public static void main(String[] args) {
         System.out.println("Starter klient ...");
         startClient();
@@ -20,23 +21,31 @@ public class TCPClient {
         System.out.println("Connecting to server...");
 
         try (Socket socket = new Socket(HOST, PORT);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+             DataInputStream stream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+             //BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             //PrintWriter writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
              Scanner clientInput = new Scanner(System.in, StandardCharsets.UTF_8))
         {
             System.out.println("Connected to server");
 
-            writer.println(handleClientFileRequest(clientInput));
+            String fileName = handleClientFileRequest(clientInput);
 
-            String fileRequest = reader.readLine();
+            out.writeUTF(fileName);
+            out.flush();
 
-            handleServerResponse(fileRequest);
+            String fileRequestResponds = stream.readUTF();
+            handleServerResponse(fileRequestResponds);
 
-            serverResponse(fileRequest);
-
+            if(fileRequestResponds.equals("Confirm sending file")){
+                receiveFile(fileName, stream);
+            }
 
         } catch (IOException e) {
             System.out.println("Failed to connect to server");
+        } catch (IllegalStateException e) {
+            System.out.println(e.getMessage());
+            //throw new R2untimeException(e);
         }
     }
     public static String handleClientFileRequest(Scanner reader){
@@ -44,27 +53,28 @@ public class TCPClient {
         System.out.println("With format GET|your file name");
         return reader.nextLine();
     }
-    public static void handleServerResponse(String response){
+    public static void handleServerResponse(String response)throws IllegalStateException {
+        if(response == null){
+            System.out.println("No response from server");
+        }
         if (response.contains("Error")){
-            System.out.println("Server responded with Error");
-            System.out.println(response);
+            throw new IllegalArgumentException(response);
         }
     }
-    public static void serverResponse(String response){
-        System.out.println(response);
-    }
 
-    public static void receiveFile(String fileRequest, InputStream in) throws IOException{
-        DataInputStream dis = new DataInputStream(in);
+
+    public static void receiveFile(String fileRequest, InputStream stream) throws IOException{
+        DataInputStream dis = new DataInputStream(stream);
+
         String[] parts = fileRequest.split("\\|", 2);
         String fileName = parts[1];
         File destination = new File ("src/main/ClientFiles/" +  fileName);
 
-        long fileLength = dis.readLong();
+        int fileLength = dis.readInt();
 
         try (FileOutputStream fos = new FileOutputStream(destination)) {
             byte[] buffer = new byte[8192];
-            long remaining = fileLength;
+            int remaining = fileLength;
             int bytesRead;
 
             while (remaining > 0 &&
@@ -73,11 +83,5 @@ public class TCPClient {
                 remaining -= bytesRead;
             }
         }
-        FileWriter fw = new FileWriter(destination, true);
-        fw.close();
     }
-    public static void receiveFiles2(String fileName){
-
-    }
-
 }

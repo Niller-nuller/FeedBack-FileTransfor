@@ -11,7 +11,6 @@ public class TCPServer {
     private static final int PORT = 5000;
 
     public static void main(String[] args) {
-
         System.out.println("Starter server på port 5000 ...");
         startServer();
     }
@@ -32,41 +31,46 @@ public class TCPServer {
                 }
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("Something has gone wrong");
             }
     }
 
-    public static void handleClientConnection(Socket clientSocket) {
+    public static void handleClientConnection(Socket clientSocket) throws IOException {
             try (
-                    BufferedReader reader = new BufferedReader((new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8)));
-                    PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+                    DataInputStream stream = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+                    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream())))
+                    {
 
-                System.out.println("Klient forbundet: " + clientSocket.getRemoteSocketAddress());
+                    System.out.println("Klient forbundet: " + clientSocket.getRemoteSocketAddress());
 
-                handleClientFileRequest(reader , writer, clientSocket);
+                    handleClientFileRequest(stream , out);
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch(IOException e){
+                System.out.println("So far");
+                e.printStackTrace();
             }
     }
-    public static void handleClientFileRequest(BufferedReader reader, PrintWriter writer, Socket clientSocket) throws IOException {
+    public static void handleClientFileRequest(DataInputStream stream, DataOutputStream out) throws IOException {
 
         boolean clientFileRequest = true;
+
         try {
             while (clientFileRequest) {
 
-                String fileName = reader.readLine();
+                String fileName = stream.readUTF();
                 System.out.println(fileName);
 
                 if (fileName == null || fileName.isBlank()) {
-                    writer.println("Error|Client sent empty request");
+                    out.writeUTF("Error|Client sent empty request");
+                    out.flush();
                     break ;
                 }
 
                 String[] parts = fileName.split("\\|", 2);
 
                 if (parts.length != 2 || parts[0].isBlank()) {
-                    writer.println("Error|Invalid format");
+                    out.writeUTF("Error|Invalid format");
+                    out.flush();
                     break;
                 }
                 String fileCommand = parts[0];
@@ -74,20 +78,25 @@ public class TCPServer {
                 if(!fileCommand.contains("GET")) {
                     throw new IllegalArgumentException("Error|Invalid format");
                 }
-
+                out.writeUTF(fileName);
+                out.flush();
                 String filePayload = parts[1];
-
                 File file = findFile(filePayload);
 
-                sendFile(file, clientSocket.getOutputStream());
+                sendConfirmation(out);
+
+                sendFile(file, out);
                 clientFileRequest = false;
             }
 
         } catch(ArrayIndexOutOfBoundsException e) {
             System.out.println("Out of bounds!");
-            writer.println("Error|Invalid format");
+            out.writeUTF("Error|Invalid format");
+            out.flush();
+
         } catch (IllegalArgumentException e) {
-            writer.println(e);
+            out.writeUTF(String.valueOf(e));
+            out.flush();
         }
     }
     public static File findFile(String fileName){
@@ -104,19 +113,22 @@ public class TCPServer {
         throw new IllegalArgumentException("Error|Invalid file name");
     }
     public static void sendFile(File file, OutputStream out) throws IOException {
-        DataOutputStream dos = new DataOutputStream(out);
 
-        long fileLength = file.length();
-        dos.writeLong(fileLength);
-        dos.flush();
 
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                dos.write(buffer, 0, bytesRead);
+            int fileLength = (int) file.length();
+            out.write(fileLength);
+            out.flush();
+
+            try (FileInputStream fis = new FileInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
             }
-        }
-        dos.flush();
+            out.flush();
+    }
+    public static void sendConfirmation(DataOutputStream out) throws IOException {
+        out.writeUTF("Confirm sending file");
     }
 }

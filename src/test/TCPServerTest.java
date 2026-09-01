@@ -20,16 +20,14 @@ public class TCPServerTest {
         IO.println(file.isFile());
         assertEquals(file, tcpServer.findFile(fileName));
     }
-    public void testFileRecived(){
 
-    }
-    @Test
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFindFileError(){
         TCPServer tcpServer = new TCPServer();
         String fileName = "youcantfindthisfile";
         File file = new File("src/main/ServerFiles/youcantfindthisfile");
         IO.println(file.isFile());
-        assertEquals(null, tcpServer.findFile(fileName));
+        tcpServer.findFile(fileName);
     }
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFindFileError2(){
