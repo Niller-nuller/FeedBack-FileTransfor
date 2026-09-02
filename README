@@ -1,0 +1,7 @@
+vi fulgte forslaget fra cloude om at bruge dataInput/Output i steadet for at bruge bufferwriter/reader1
+
+i receiveFile i client har vi ændret på dens forslag til methoden ved at vi fjernet et stykke code som hvar unødvendigt fordi dataStream var allerede initalized
+
+
+
+Ai review af Code.
