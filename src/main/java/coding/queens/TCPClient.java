@@ -26,31 +26,65 @@ public class TCPClient {
         {
             System.out.println("Connected to server");
 
-            String serverRequest = handleClientFileRequest(clientInput);
-
-            dataOutputStream.writeUTF(serverRequest);
-            dataOutputStream.flush();
-
-            String fileRequest = dataInputStream.readUTF();
-
-            handleServerResponse(fileRequest);
-
-
-
+            requestFile(clientInput,dataOutputStream,dataInputStream);
 
         } catch (IOException e) {
             System.out.println("Failed to connect to server");
+        } catch (IllegalArgumentException e){
+            System.out.println(e.getMessage());
         }
     }
+
+    public static void requestFile(Scanner clientInput, DataOutputStream dataOutputStream, DataInputStream dataInputStream) throws IOException {
+        String fileName = handleClientFileRequest(clientInput); // GET|stuff.whatever
+
+        sendFileRequest(fileName,dataOutputStream); // Sends the request to the server.
+
+        String serverResponse = dataInputStream.readUTF();
+        handleServerResponse(serverResponse);
+
+        if (serverResponse.equals("OK")) {
+            String[] parts = fileName.split("\\|", 2);
+            File destination = new File("src/main/ClientFiles/" + parts[1]);
+            receiveFile(destination, dataInputStream);
+            System.out.println("file saved to " + destination.getPath());
+        }
+    }
+
     public static String handleClientFileRequest(Scanner reader){
         System.out.println("Enter file name: ");
         System.out.println("With format GET|your file name");
         return reader.nextLine();
     }
+
+    public static void sendFileRequest(String serverRequest, DataOutputStream dataOutputStream) throws IOException {
+        dataOutputStream.writeUTF(serverRequest);
+        dataOutputStream.flush();
+    }
+
     public static void handleServerResponse(String response){
         if (response.contains("Error")){
             System.out.println("Server responded with Error");
-            System.out.println(response);
+            throw new IllegalArgumentException(response);
+        }
+    }
+
+    public static void receiveFile(File destination, DataInputStream in) throws IOException {
+
+        long fileLength = in.readLong();
+
+        try (FileOutputStream fos = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[8192];
+            long remaining = fileLength;
+            int bytesRead;
+
+            while (remaining > 0 &&
+                    (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
+                fos.write(buffer, 0, bytesRead);
+                remaining -= bytesRead;
+            }
+        } catch (NullPointerException | FileNotFoundException e) {
+            throw new IllegalArgumentException("Client file name has gone wrong");
         }
     }
 }
