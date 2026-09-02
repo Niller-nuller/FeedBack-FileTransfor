@@ -1,9 +1,6 @@
 package coding.queens;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -23,15 +20,18 @@ public class TCPClient {
         System.out.println("Connecting to server...");
 
         try (Socket socket = new Socket(HOST, PORT);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+             DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
              Scanner clientInput = new Scanner(System.in, StandardCharsets.UTF_8))
         {
             System.out.println("Connected to server");
 
-            writer.println(handleClientFileRequest(clientInput));
+            String serverRequest = handleClientFileRequest(clientInput);
 
-            String fileRequest = reader.readLine();
+            dataOutputStream.writeUTF(serverRequest);
+            dataOutputStream.flush();
+
+            String fileRequest = dataInputStream.readUTF();
 
             handleServerResponse(fileRequest);
 

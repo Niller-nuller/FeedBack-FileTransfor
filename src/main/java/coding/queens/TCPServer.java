@@ -1,9 +1,6 @@
 package coding.queens;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -39,46 +36,51 @@ public class TCPServer {
             }
     }
 
-    public static void handleClientConnection(Socket clientSocket) {
+    public static void handleClientConnection(Socket clientSocket) throws IOException {
 
             try (
-                    BufferedReader reader = new BufferedReader((new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8)));
-                    PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+                    DataInputStream dataInputStream = new DataInputStream(clientSocket.getInputStream());
+                    DataOutputStream dataOutputStream = new DataOutputStream(clientSocket.getOutputStream())) {
 
                 System.out.println("Klient forbundet: " + clientSocket.getRemoteSocketAddress());
 
-                handleClientFileRequest(reader , writer);
+                handleClientFileRequest(dataInputStream , dataOutputStream);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
     }
-    public static void handleClientFileRequest(BufferedReader reader, PrintWriter writer) throws IOException {
+    public static void handleClientFileRequest(DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws IOException {
 
         boolean clientFileRequest = true;
+
         try {
             while (clientFileRequest) {
 
-                String fileName = reader.readLine();
+                String fileName = dataInputStream.readUTF();
                 System.out.println(fileName);
-                if (fileName == null || fileName.isEmpty()) {
-                    writer.println("Error|Client sent empty request");
+                if (fileName.isEmpty()) {
+                    dataOutputStream.writeUTF("Error|Client sent empty request");
+                    dataOutputStream.flush();
                 }
 
-                String[] parts = fileName.split(">\\|", 2);
+                String[] parts = fileName.split("\\|", 2);
 
                 if (parts.length != 2 || parts[0].isBlank()) {
-                    writer.println("Error|Invalid format");
+                    dataOutputStream.writeUTF("Error|Invalid format");
+                    dataOutputStream.flush();
                 }
                 String fileCommand = parts[0];
                 String filePayload = parts[1];
 
-                writer.println(fileCommand + " " + filePayload);
+                dataOutputStream.writeUTF(fileCommand + " " + filePayload);
+                dataOutputStream.flush();
                 clientFileRequest = false;
             }
 
         } catch(ArrayIndexOutOfBoundsException e) {
-            writer.println("Error|Invalid format");
+            dataOutputStream.writeUTF("Error|Invalid format");
+            dataOutputStream.flush();
         }
     }
 }
