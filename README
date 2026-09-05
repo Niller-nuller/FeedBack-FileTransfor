@@ -5,3 +5,169 @@ i receiveFile i client har vi ændret på dens forslag til methoden ved at vi fj
 
 
 Ai review af Code.
+
+# TCP filoverførsel
+
+
+
+## Gruppe
+
+Codeing Queens
+
+Navne: Gustav, Johan og Niels
+
+
+
+## Løsningen
+
+
+Det først vi har gjort er ikke at implementere en protokol klasse, men koden er segmenteret sådan at den ville være,
+en let tilføjelse.
+
+
+Vi har endt med at bruge DataInputStream and DataOutStream, istedet for BufferedReader og PrintWriter,
+efter anbefaling af AI agent.
+
+
+På grund af reader og writer er til tekst, mens output/input er til binære bytes.
+
+
+Vi har lavet flere metoder til små ting så de er lettere at lave unit test på.
+
+
+Fil systemet er case-sensitivt.
+
+
+
+
+## AI-agent
+
+
+Ai agenten er blevet anvendt til at hjælp med at lave issus, efter lidt back and forth,
+fik vi den til at lave mere flere men langt simpler issues.
+
+
+### Plan
+
+
+Med hjælp fra Ai agenten ende vi med 21 små issues, som kan serveren lytte på port 5000, kan en klient forbinde til port 5000.
+
+
+
+
+Hvad foreslog AI?
+
+
+Ai agenten foreslog støre og mere kompliceret issues.
+
+
+Ai agenten foreslog at vi skiftede fra BufferedReader og PrintWriter, for lettere integration og sikkerhed.
+
+
+
+
+Hvad ændrede I selv i planen?
+
+
+Hvad vi selv har ændret i planen er finpudsning og lidt unit test.
+
+
+
+
+### Implementering
+
+
+Vi har selv skrevet det meste af koden, Ai har hjulpet med at skrive nogle af unit tests og har lavet integrations test, som ikke alle virker.
+
+
+
+
+Hvor hjalp Agent jer mest?
+
+
+Ændring af BufferedReader og PrintWriter.
+
+
+### Kritisk vurdering
+
+
+Ai agenten kan kode og lave planer hurtigere end vi kan, men den virker til at hurtigt gøre tingene mere komplekse end nødvendigt.
+
+
+Den har også svært ved at læse implosiv context, som at kigge på koden, læser den fra noget den læste en time tidligere end at læse koden om, så den ender med at give de samme fejl som var rettet.
+
+
+Den har det også med at give meget tekst som kan gøre det svært eller tids optagende at læse.
+
+
+Et AI-forslag vi fulgte:
+
+
+Ændring af BufferedReader og PrintWriter.
+
+
+Et AI-forslag vi ændrede eller afviste:
+
+
+Første par planer.
+
+
+Implementering af dens version a sendFile() metoden.
+
+
+Hvorfor?
+
+
+De første par planner var for store og forventet at hele system skulle sættes op på 1-2 issues og resten 3-5 var test baseret.
+
+
+Den ville gerne have vi passeret InputStream som parameter for sendFile(), men den var allerede åben med enden Reader eller DataInput, så den crashede serveren hver gang metoden bliv kaldt.
+
+
+## Test
+
+
+Ai har skrevet en god del af unit tests, det krævede lidt indrettelse.
+
+
+| Test | Resultat |
+
+|---|---|
+
+| Normal fil | |
+
+| Stor fil | |
+
+| Ukendt fil | |
+
+| ../hemmelig.txt | |
+
+| Server ikke startet | |
+
+
+
+## Peer review
+
+
+
+Vigtigste feedback fra den anden gruppe:
+
+
+
+Hvad ændrede vi efter reviewet?
+
+
+
+Hvad valgte vi eventuelt ikke at ændre – og hvorfor?
+
+
+
+## Refleksion
+
+
+
+1. Hvor var AI mest nyttig?
+
+2. Hvornår skulle I være kritiske over for AI?
+
+3. Hvordan kontrollerede I, at AI-genereret kode faktisk virkede?

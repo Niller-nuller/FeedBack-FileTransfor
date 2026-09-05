@@ -4,7 +4,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -92,6 +94,11 @@ public class TCPClientTest {
 
         // Cleanup
         destination.delete();
+    }
+    @Test(expectedExceptions = SocketException.class)
+    public void testServerNotStartedConnectionFails() throws IOException {
+        Socket socket = new Socket("localhost", 5000);
+        fail("Forventet connection refused, fordi serveren ikke er startet");
     }
 
 }
