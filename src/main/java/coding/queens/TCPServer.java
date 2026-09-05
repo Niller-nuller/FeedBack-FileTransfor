@@ -3,6 +3,7 @@ package coding.queens;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
 
@@ -51,6 +52,8 @@ public class TCPServer {
                 throw new RuntimeException(e);
             }
     }
+
+    //Hoved metoden til at håndtaggere client, den skal også håndtaggere hvad sker der vis vi smider en Exception.
     public static void handleClientFileRequest(DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws IOException {
 
         boolean clientFileRequest = true;
@@ -61,7 +64,7 @@ public class TCPServer {
 
                 String fileName = dataInputStream.readUTF();
 
-                String filePayload = validateRequest(fileName, dataInputStream, dataOutputStream);
+                String filePayload = validateRequest(fileName, dataOutputStream);
 
                 File fileToSend = findFile(filePayload);
 
@@ -69,16 +72,15 @@ public class TCPServer {
                 clientFileRequest = false;
             }
 
-        } catch(ArrayIndexOutOfBoundsException e) {
+        } catch(ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             dataOutputStream.writeUTF(e.getMessage());
             dataOutputStream.flush();
-        } catch (IllegalArgumentException e) {
-            dataOutputStream.writeUTF(e.getMessage());
-            dataOutputStream.flush();
+        } catch (SocketException e){
+            System.out.println("Client left abruptly");
         }
     }
-
-    public static String validateRequest(String fileName, DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws IOException {
+    //Checker om vores besked a valid.
+    public static String validateRequest(String fileName, DataOutputStream dataOutputStream) throws IOException {
 
         System.out.println(fileName);
         if (fileName.isEmpty()) {
@@ -99,7 +101,7 @@ public class TCPServer {
         return filePayload;
     }
 
-
+    //Checker om filen ekstiere.
     public static File findFile(String filePayload){
 
         if (filePayload.contains("/")) {
@@ -112,7 +114,7 @@ public class TCPServer {
         }
         throw new IllegalArgumentException("Error|Invalid file name");
     }
-
+    //Sender filen ved brug af bytes.
     public static void sendFile(File file, DataOutputStream dos) throws IOException {
 
         long fileLength = file.length();
