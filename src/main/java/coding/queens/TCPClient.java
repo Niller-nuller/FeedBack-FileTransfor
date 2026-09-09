@@ -43,7 +43,7 @@ public class TCPClient {
         String serverResponse = dataInputStream.readUTF();
         handleServerResponse(serverResponse);
 
-        if (serverResponse.equals("OK")) {
+        if (serverResponse.equals("ok!")) {
             String[] parts = fileName.split("\\|", 2);
             File destination = new File("src/main/ClientFiles/" + parts[1]);
             receiveFile(destination, dataInputStream);

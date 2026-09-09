@@ -68,6 +68,9 @@ public class TCPServer {
 
                 File fileToSend = findFile(filePayload);
 
+                dataOutputStream.writeUTF("ok!");
+                dataOutputStream.flush();
+
                 sendFile(fileToSend, dataOutputStream);
                 clientFileRequest = false;
             }
@@ -89,16 +92,13 @@ public class TCPServer {
 
         String[] parts = fileName.split("\\|", 2);
 
-        if (parts.length != 2 || parts[0].isBlank()) {
+        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             throw new ArrayIndexOutOfBoundsException("Error|Invalid format");
         }
         String fileCommand = parts[0];
-        String filePayload = parts[1];
 
-        dataOutputStream.writeUTF("Confirmed!");
-        dataOutputStream.flush();
 
-        return filePayload;
+        return parts[1];
     }
 
     //Checker om filen ekstiere.
@@ -109,6 +109,7 @@ public class TCPServer {
         } else {
             File file = new File("src/main/ServerFiles/" + filePayload);
             if (file.isFile()) {
+
                 return file;
             }
         }
